@@ -1,0 +1,17 @@
+{
+  "pluginName": "websocket测试工具",
+  "description": "简易 websocket 开发测试工具",
+  "main": "index.html",
+  "preload": "preload.js",
+  "version": "1.0.0",
+  "logo": "logo.jpg",
+  "author": "xinu",
+  "homepage": "https://github.com/imxiny",
+  "features": [
+    {
+      "code": "websocket",
+      "explain": "websocket",
+      "cmds":["websocket"]
+    }
+  ]
+}

@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket测试工具</title>
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <!-- 样式表 -->
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/animate.min.css">
+    <link rel="stylesheet" href="css/wstool.css">
+    <style>
+        .hljs {
+            display: block;
+            overflow-x: auto;
+            padding: 0.5em;
+            background: #ffffff
+        }
+
+        .hljs, .hljs-subst, .hljs-tag, .hljs-title {
+            color: #000000
+        }
+
+        .hljs-strong, .hljs-emphasis {
+            color: #000000
+        }
+
+        .hljs-bullet, .hljs-quote, .hljs-number, .hljs-regexp, .hljs-literal {
+            color: #000080
+        }
+
+        .hljs-code .hljs-selector-class {
+            color: #800080
+        }
+
+        .hljs-emphasis, .hljs-stronge, .hljs-type {
+            font-style: italic
+        }
+
+        .hljs-keyword, .hljs-selector-tag, .hljs-function, .hljs-section, .hljs-symbol, .hljs-name {
+            color: #808000
+        }
+
+        .hljs-attribute {
+            color: #800000
+        }
+
+        .hljs-variable, .hljs-params, .hljs-class .hljs-title {
+            color: #0055AF
+        }
+
+        .hljs-string, .hljs-selector-id, .hljs-selector-attr, .hljs-selector-pseudo, .hljs-type, .hljs-built_in, .hljs-builtin-name, .hljs-template-tag, .hljs-template-variable, .hljs-addition, .hljs-link {
+            color: #008000
+        }
+
+        .hljs-comment, .hljs-meta, .hljs-deletion {
+            color: #008000
+        }
+
+        #error-box {
+            max-height: 40px;
+            min-height: 20px;
+            border: 1px solid red;
+        }
+
+        .container {
+            max-width: 1080px !important;
+        }
+
+        .card-body {
+            padding: 0.75rem !important;
+        }
+
+        .col-md-5 {
+            padding-left: 10px !important;
+            padding-right: 10px !important;
+        }
+
+        .col-md-7 {
+            padding-left: 10px !important;
+            padding-right: 10px !important;
+        }
+    </style>
+    <title>websocket/ws/wss在线调试测试工具</title>
+</head>
+<body>
+
+<div id="root">
+    <!-- 过渡动效警告框 -->
+    <template>
+        <transition name="slide-fade">
+            <div class="alert ws-alert monospace" :class=" 'alert-' + alert.class " v-if="alert.state">
+                {{alert.content}}
+            </div>
+        </transition>
+    </template>
+    <!-- 头部导航 -->
+    <!-- <nav class="navbar navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand monospace" href="javascript:void(0)">
+                <span>WEBSOCKET</span>
+                <small>在线测试工具</small>
+            </a>
+        </div>
+    </nav> -->
+    <!-- 主体内容 -->
+    <template>
+        <div class="container mt-3 main-container">
+            <div class="row monospace">
+                <div class="col-sm-12">
+                    <div class="card">
+                        <!-- 应用容器 -->
+                        <div class="card-body">
+                            <div class="row">
+                                <!-- 左侧面板 -->
+                                <div class="col-sm-12 col-md-5">
+                                    <!-- 服务设置 -->
+                                    <div class="col-sm-12">
+                                        <p class="card-title">服务器配置 状态: {{ instance.readyState | rStatus }}</p>
+                                        <hr class="divider divider-dashed">
+                                        <!-- 连接地址 -->
+                                        <div class="card-text">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <div class="input-group-text">地址</div>
+                                                </div>
+                                                <input type="text" class="form-control" placeholder="输入不带前缀的服务器地址"
+                                                       v-model="address">
+                                                <div class="input-group-append">
+                                                    <button type="button" class="btn btn-block"
+                                                            :class="connected ? 'btn-danger' : 'btn-success'"
+                                                            @click="autoWsConnect">{{ connected ? '关闭' : '开启' }}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- 发包设置 -->
+                                    <div class="col-sm-12 mt-3">
+                                        <p class="card-title">发包设置</p>
+                                        <hr class="divider divider-dashed">
+                                        <!-- 自动发送 -->
+                                        <div class="card-text">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <div class="input-group-text">每隔</div>
+                                                </div>
+                                                <input title="" type="text" class="form-control text-center"
+                                                       v-model="heartBeatSecond" :disabled="!connected">
+                                                <div class="input-group-append input-group-prepend">
+                                                    <span class="input-group-text">秒发送</span>
+                                                </div>
+                                                <input title="" type="text" class="form-control"
+                                                       v-model="heartBeatContent" :disabled="!connected">
+                                                <div class="input-group-append">
+                                                    <button type="button" class="btn btn-block"
+                                                            :class="autoSend ? 'btn-danger' : 'btn-success'"
+                                                            @click="autoHeartBeat" :disabled="!connected">
+                                                        {{ autoSend ? '停止' : '开始' }}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- 手动发送 -->
+                                        <div class="card-text mt-2">
+                                            <textarea class="form-control mt-1" id="exampleTextarea" rows="2"
+                                                      placeholder="需要发送到服务端的内容" v-model="content"
+                                                      :disabled="!connected"></textarea>
+                                            <div class="custom-control custom-checkbox inline-flex mt-2">
+                                                <input type="checkbox" class="custom-control-input" id="sendClean"
+                                                       v-model="sendClean" :disabled="!connected">
+                                                <label class="custom-control-label" for="sendClean">发包清空输入</label>
+                                            </div>
+                                        </div>
+                                        <div class="card-text mt-2">
+                                            <button class="btn btn-block btn-success" :disabled="!connected"
+                                                    @click="sendData">发送到服务端
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <!-- 调试消息 -->
+                                    <div class="col-sm-12 mt-3">
+                                        <p class="card-title">调试消息</p>
+                                        <hr class="divider divider-dashed">
+                                        <div class="card-text">
+                                            <div class="card-title console-box" id="console-box">
+                                                <div class="mb-2" v-for="item in consoleData">
+                                                    <strong :class="'text-'+item.type">{{item.time}} => </strong> <span>{{item.content}}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- 右侧面板 -->
+                                <div class="col-sm-12 col-md-7">
+                                    <!-- 消息记录 -->
+                                    <div class="col-sm-12">
+                                        <p class="card-title" style="display: inline">消息记录</p>
+                                        <a style="float: right" href="javascript:void(0);" @click="cleanMessage">清空消息</a>
+                                        <hr class="divider divider-dashed">
+                                        <div>
+                                            <div class="custom-control custom-checkbox inline-flex mt-2">
+                                                <input type="checkbox" class="custom-control-input" id="recvClean"
+                                                       v-model="recvClean" :disabled="!connected">
+                                                <label class="custom-control-label" for="recvClean">收包清空记录</label>
+                                            </div>
+                                            <div class="custom-control custom-checkbox inline-flex mt-2">
+                                                <input type="checkbox" class="custom-control-input" id="recvDecode"
+                                                       v-model="recvDecode" :disabled="!connected">
+                                                <label class="custom-control-label" for="recvDecode">收包JSON解码</label>
+                                            </div>
+                                            <div class="custom-control custom-checkbox inline-flex mt-2">
+                                                <input type="checkbox" class="custom-control-input" id="recvPause"
+                                                       v-model="recvPause" :disabled="!connected">
+                                                <label class="custom-control-label" for="recvPause">暂停接收</label>
+                                            </div>
+                                        </div>
+                                        <hr class="divider divider-dashed">
+                                        <div class="card-text message-box" id="message-box">
+                                            <template v-for="item in messageData">
+                                                <div class="mb-4"
+                                                     :class="{ 'text-left' : item.direction , 'text-left' : !item.direction }">
+                                                    <strong><span
+                                                            :class="{'text-success' : item.direction , 'text-primary' : !item.direction}">{{item.direction ? '发送' : '收到'}}消息</span>
+                                                        {{item.time}}</strong>
+                                                    <div class="monospace" v-if="!recvDecode"> {{ item.content }}</div>
+                                                    <div class="monospace" v-html='JSON.format(item.content)'
+                                                         v-if="recvDecode"></div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+</div>
+
+<!-- 页面脚本 -->
+<script src="js/vue.js"></script>
+<script src="js/moment.min.js"></script>
+<script src="js/highlight.min.js"></script>
+<script src="js/jsformat.js"></script>
+<script src="js/socket.js"></script>
+</body>
+</html>
