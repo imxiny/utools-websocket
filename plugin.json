@@ -10,8 +10,17 @@
   "features": [
     {
       "code": "websocket",
-      "explain": "websocket",
-      "cmds":["websocket"]
+      "explain": "websocket 开发测试工具",
+      "cmds": [
+        "websocket",
+        {
+          "type": "regex",
+          "label": "websocket",
+          "match": "/^(wss|ws):\\/\\/(.?){3,}/i",
+          "minLength": 10,
+          "maxLength": 255
+        }
+      ]
     }
   ]
 }
